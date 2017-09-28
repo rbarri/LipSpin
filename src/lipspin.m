@@ -583,7 +583,11 @@ set(hMainFigure,'Visible','on')
                             currentPattern.mets.(['met' num2str(j)])=NMRdata.pattern(l).mets.(['met' num2str(j)]);
                         else
                             currentPattern.mets.(['spec' num2str(j)])=NMRdata.pattern(l).mets.(['met' num2str(j)]);
-                            stdIndex=strcmp(currentPattern.mets.(['spec' num2str(j)]).standard, NMRdata.standards.label{1});
+                            if isfield(NMRdata, 'standards'),
+                                stdIndex=strcmp(currentPattern.mets.(['spec' num2str(j)]).standard, NMRdata.standards.label{1});
+                            else
+                                stdIndex=[];
+                            end
                             if ~isempty(stdIndex) && any(stdIndex),
                                 rangeSpec=getRang(NMRdata.X.axisscale{2}, currentPattern.mets.(['spec' num2str(j)]).hlim, currentPattern.mets.(['spec' num2str(j)]).llim);
                                 currentPattern.mets.(['spec' num2str(j)]).xaxis=NMRdata.X.axisscale{2}(rangeSpec);
@@ -1699,7 +1703,7 @@ set(hMainFigure,'Visible','on')
     end
 
     function LoadFileStandard(pathname, filename)
-        if exist(NMRdata.paths.stds, 'file')
+        if exist(pathname, 'file')
             if isempty(filename),
                 stds=dir([NMRdata.paths.stds '\*.nmrstd']);
                 pathname=[NMRdata.paths.stds '\'];
