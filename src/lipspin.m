@@ -1668,8 +1668,8 @@ set(hMainFigure,'Visible','on')
                     pos(1)=pos(1)+pos(3)*0.85;
                     pos(3)=pos(3)*0.10;
                     h=legend(NMRdata.loadStandardsData.hStandardAxes, NMRdata.standards.label{1}(:,visible), 'location', 'east', 'position', pos, 'fontsize', 7 , 'Interpreter', 'none');
-                    set(h,'PlotBoxAspectRatioMode','manual');
-                    set(h,'PlotBoxAspectRatio',[1 0.8 1]); 
+%                     set(h,'PlotBoxAspectRatioMode','manual'); %Not working with Matlab r2017a
+%                     set(h,'PlotBoxAspectRatio',[1 0.8 1]);  %Not working with Matlab r2017a
                 end
         end
         datacursormode on
