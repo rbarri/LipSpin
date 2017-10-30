@@ -309,7 +309,7 @@ end
 % Setup optimization options
 options = optimset('lsqcurvefit'); 
 % options = optimset('Algorithm', 'levenberg-marquardt');
-options = optimset(options,'DiffMinChange', DiffMinChange);
+options = optimset(options,'DiffMinChange', DiffMinChange); 
 options = optimset(options,'DiffMaxChange', 1);
 % options = optimset(options,'DiffMaxChange', max(sum(ub)));
 % options = optimset(options,'DiffMinChange', 1*10^(-1*(7+scale_factor)));
