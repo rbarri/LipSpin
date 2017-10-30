@@ -71,6 +71,10 @@ X=X/scale_factor_intensities;
 noiseLevel=noiseLevel/scale_factor_intensities;
 scale_factor=0;
 
+%Set the minimum change for partial derivatives in the non-linear least squares method
+DiffMinChange=1e-4;
+MinConstraintRange=DiffMinChange+DiffMinChange/100;
+
 %% Generic boundaries for metabolites
 %Set boundaries for intensity
 [~,dynRange]=getNoiseLevel(X);
@@ -123,9 +127,9 @@ for i=1:length(submets),
         lb(4,i)=lgaussFactorbckg;        
         s0(4,i)=0.5;
         %Set very low values to J-coupling to avoid it in fitting
-        ub(5,i)=0.3e-5;
-        lb(5,i)=0.1e-5;
-        s0(5,i)=0.2e-5;        
+        ub(5,i)=MinConstraintRange;
+        lb(5,i)=0;
+        s0(5,i)=0;        
     elseif strncmp('met', submets{i}, 3)
         %Set boundaries for intensities
         s0(1,i)=lbI + (ubI-lbI)*rand(1);
@@ -137,8 +141,8 @@ for i=1:length(submets),
             lbppm=-0.001*constraint_factor(2,i);
             ubppm=0.001*constraint_factor(2,i);
         else
-            lbppm=-0.1e-5;
-            ubppm=0.1e-5;
+            lbppm=-MinConstraintRange/2;
+            ubppm=MinConstraintRange/2;
         end           
         s0(2,i)=fields.pos;        
         ub(2,i)=ubppm+fields.pos;
@@ -149,15 +153,15 @@ for i=1:length(submets),
             lfwhh=(-0.05*constraint_factor(3,i)*1e6)/freq;
             ufwhh=(0.05*constraint_factor(3,i)*1e6)/freq;    
         else
-            lfwhh=(-0.05e-5*1e6)/freq;
-            ufwhh=(0.05e-5*1e6)/freq;
+            lfwhh=-MinConstraintRange/2;
+            ufwhh=MinConstraintRange/2;
         end
         s0(3,i)=(fields.fwhh*1e6)/freq;
         ub(3,i)=s0(3,i)+ufwhh;
         lb(3,i)=max(s0(3,i)+lfwhh, 0);              
         %Set boundaries for gaussian percentage         
-        ugaussFactor=0.1*constraint_factor(4,i)+0.1e-5;
-        lgaussFactor=-0.1*constraint_factor(4,i)-0.1e-5;
+        ugaussFactor=0.1*constraint_factor(4,i)+MinConstraintRange/2;
+        lgaussFactor=-0.1*constraint_factor(4,i)-MinConstraintRange/2;
         s0(4,i)=fields.gauss;
         ub(4,i)=min(ugaussFactor+fields.gauss, 1);
         lb(4,i)=max(lgaussFactor+fields.gauss, 0);
@@ -168,14 +172,14 @@ for i=1:length(submets),
             ujcop=(0.1*constraint_factor(5,i)*1e6)/freq;    
         else
             ljcop=0;
-            ujcop=(0.1e-5*1e6)/freq;
+            ujcop=MinConstraintRange;
         end
         s0(5,i)=(fields.jcop*1e6)/freq;
         ub(5,i)=s0(5,i)+ujcop;
         lb(5,i)=s0(5,i)+ljcop;                              
     elseif strncmp('spec', submets{i}, 4)
-        ub(1:5,i)=3e-10;
-        lb(1:5,i)=1e-10;
+        ub(1:5,i)=MinConstraintRange;
+        lb(1:5,i)=0;
         %Set boundaries for intensities
         ub(1,i)=ubI;
         lb(1,i)=lbI;
@@ -206,8 +210,8 @@ for i=1:length(submets),
             lbppm=-0.001*constraint_factor(2,i);
             ubppm=0.001*constraint_factor(2,i);
         else
-            lbppm=-0.1e-10;
-            ubppm=0.1e-10;
+            lbppm=-MinConstraintRange/2;
+            ubppm=MinConstraintRange/2;
         end           
         s0(2,i)=fields.pos;        
         ub(2,i)=ubppm+fields.pos;
@@ -220,20 +224,20 @@ for i=1:length(submets),
             lfwhh=(-0.05*constraint_factor(3,i)*1e6)/freq;
             ufwhh=(0.05*constraint_factor(3,i)*1e6)/freq;    
         else
-            lfwhh=(-0.05e-5*1e6)/freq;
-            ufwhh=(0.05e-5*1e6)/freq;
+            lfwhh=(-MinConstraintRange/2*1e6)/freq;
+            ufwhh=(MinConstraintRange/2*1e6)/freq;
         end
         s0(3,i)=(fields.fwhh*1e6)/freq;
         ub(3,i)=s0(3,i)+ufwhh;
         lb(3,i)=s0(3,i)+lfwhh;                    
         
         %Set boundaries for gaussian percentage         
-        ugaussFactor=0.1*constraint_factor(4,i)+0.1e-5;
-        lgaussFactor=-0.1*constraint_factor(4,i)-0.1e-5;
+        ugaussFactor=0.1*constraint_factor(4,i)+MinConstraintRange/2;
+        lgaussFactor=-0.1*constraint_factor(4,i)-MinConstraintRange/2;
         s0(4,i)=0;
         ub(4,i)=min(ugaussFactor, 1);
         lb(4,i)=max(lgaussFactor, 0);
-        
+        s0(5,i)=0;
         mets.(submets{i})=fields;
     end
 end
@@ -250,9 +254,10 @@ if bitand(4, BGtype),
         mets.(['cos' num2str(i)])=[];
     end
     %Define boundaries (necessarily of length 5 to fit mets constraints)
-    ub_bg=[1; 2*pi; 3e-10; 3e-10; 3e-10]; %intensity and phase
-    lb_bg=[0;    0; 1e-10; 1e-10; 1e-10];
+    ub_bg=[1; 2*pi; MinConstraintRange; MinConstraintRange; MinConstraintRange]; %intensity and phase
+    lb_bg=[0;    0; 0; 0; 0];
     s0_bg=lb_bg +(ub_bg-lb_bg)*rand(1);
+    s0_bg(3:5)=0;
     ub_bg=repmat(ub_bg, 1, order);
     lb_bg=repmat(lb_bg, 1, order);
     s0_bg=repmat(s0_bg, 1, order);
@@ -282,9 +287,9 @@ if bitand(2, BGtype),
         lbAux(4,i)=lgaussFactorbckg;        
         s0Aux(4,i)=0.5;
         %Set very low values to J-coupling to void it in fitting
-        ubAux(5,i)=0.3e-10;
-        lbAux(5,i)=0.1e-10;
-        s0Aux(5,i)=0.2e-10;        
+        ubAux(5,i)=MinConstraintRange;
+        lbAux(5,i)=0;
+        s0Aux(5,i)=0;        
     end 
     ub=cat(2, ub, ubAux);
     lb=cat(2, lb, lbAux);
@@ -292,9 +297,10 @@ if bitand(2, BGtype),
 end
 if bitand(1, BGtype),
     mets.poly=[];
-    ub_bg=[1; 1; 3e-10; 3e-10; 3e-10]; %offset and slope
-    lb_bg=[-1; -1; 1e-10; 1e-10; 1e-10];       
+    ub_bg=[1; 1; MinConstraintRange; MinConstraintRange; MinConstraintRange]; %offset and slope
+    lb_bg=[-1; -1; 0; 0; 0];       
     s0_bg=lb_bg +(ub_bg-lb_bg)*rand(1);
+    s0_bg(3:5)=0;
     ub=cat(2, ub, ub_bg);
     lb=cat(2, lb, lb_bg);
     s0=cat(2, s0, s0_bg);         
@@ -302,7 +308,8 @@ end
 
 % Setup optimization options
 options = optimset('lsqcurvefit'); 
-options = optimset(options,'DiffMinChange', 1*10^(-1*4));
+% options = optimset('Algorithm', 'levenberg-marquardt');
+options = optimset(options,'DiffMinChange', DiffMinChange);
 options = optimset(options,'DiffMaxChange', 1);
 % options = optimset(options,'DiffMaxChange', max(sum(ub)));
 % options = optimset(options,'DiffMinChange', 1*10^(-1*(7+scale_factor)));
@@ -332,9 +339,11 @@ while Error_best>options.maxError && indexTries < options.tries,
     end
     
     if indexTries>=options.tries/2,
+        zeroElements=(s0==0);
         for j=1:size(s0,1),
             s0(j,:)=lb(j,:) + (ub(j,:)-lb(j,:)).*rand(1,size(s0,2));
         end
+        s0(zeroElements)=0;
     else
         s0(1,:)=lb(1,:) + (ub(1,:)-lb(1,:)).*rand(1,size(s0,2));
     end
