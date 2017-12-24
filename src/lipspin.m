@@ -27,9 +27,11 @@ NMRdata.version='1.0';
 NMRdata.phaseRegions=[];
 NMRdata.bcRegions=[];
 
+cfgExtFile='options.nmrcfg';
+
 %if exists then read config file, otherwise set default values 
-if exist('options.nmrcfg', 'file') == 2,
-    f=fopen('options.nmrcfg');
+if exist(cfgExtFile, 'file') == 2,
+    f=fopen(cfgExtFile);
     cfgFile = fread(f, '*char')';
     fclose(f);
     if ~strcmp(cfgFile,'')
@@ -446,6 +448,7 @@ set(hMainFigure,'Visible','on')
 
 %% UIcontrol callbacks: Options window
     function btnSaveGeneralOptions_Callback (~,~)
+        cfgExtFile='options.nmrcfg';
         NMRdata.fitPars.maxError=get(NMRdata.generalOptionsData.txtMaxError, 'string');
         str=['##MAXERROR=' NMRdata.fitPars.maxError  '\n'];
         NMRdata.fitPars.maxError=str2double(NMRdata.fitPars.maxError);
@@ -462,7 +465,7 @@ set(hMainFigure,'Visible','on')
             NMRdata=rmfield(NMRdata, 'standards');
         end        
         LoadFileStandard(NMRdata.paths.stds, []);
-        f = fopen('options.nmrcfg', 'w+');
+        f = fopen(cfgExtFile, 'w+');
         fprintf(f, str);
         fclose(f);        
         close(NMRdata.hEditGeneralOptions);
@@ -998,7 +1001,7 @@ set(hMainFigure,'Visible','on')
                 factor=0.001;
                 handle=NMRdata.editMetData.lblConstCenter;
             case NMRdata.editMetData.sldConstFWHH
-                factor=0.05;
+                factor=0.1;
                 handle=NMRdata.editMetData.lblConstFWHH;
             case NMRdata.editMetData.sldConstGaussian
                 factor=0.1;
@@ -1022,7 +1025,7 @@ set(hMainFigure,'Visible','on')
         value=str2double(get(NMRdata.editMetData.txtFWHH, 'String'));
         NMRdata.pattern(iPattern).mets.(['met' num2str(NMRdata.editMetData.metIndex)]).fwhh=value;
         value=get(NMRdata.editMetData.lblConstFWHH, 'String');
-        value=str2double(value(2:end))/0.05;        
+        value=str2double(value(2:end))/0.1;        
         NMRdata.pattern(iPattern).constraints(NMRdata.editMetData.metIndex, 3)=value;
         value=get(NMRdata.editMetData.lblConstGaussian, 'String');
         value=str2double(value(2:end))/0.1;            
@@ -1147,8 +1150,8 @@ set(hMainFigure,'Visible','on')
             NMRdata.editMetData.lblConstCenter = uicontrol(pnlOptionsPanel, 'Style','text', 'Units','Normalized', 'HorizontalAlignment','center', 'Position', [0.85 0.7 0.1 0.05], 'String',[char(177) num2str(currentValue*0.001)]);
             NMRdata.editMetData.txtFWHH=uicontrol(pnlOptionsPanel, 'Style','edit', 'Units','Normalized', 'backgroundColor','w', 'Position',[0.35 0.6 0.1 0.05], 'String',num2str(NMRdata.pattern(iPattern).mets.(['met' num2str(metIndex)]).fwhh));
             currentValue=NMRdata.pattern(iPattern).constraints( metIndex,3);        
-            NMRdata.editMetData.sldConstFWHH= uicontrol(pnlOptionsPanel, 'Style', 'slider', 'Units','Normalized', 'Min',0,'Max',50,'Value',currentValue, 'SliderStep',[0.02 0.2], 'Position', [0.6 0.6 0.25 0.05], 'CallBack', {@sldConstraint_Callback});        
-            NMRdata.editMetData.lblConstFWHH= uicontrol(pnlOptionsPanel, 'Style','text', 'Units','Normalized', 'HorizontalAlignment','center', 'Position', [0.85 0.6 0.1 0.05], 'String',[char(177) num2str(currentValue*0.05)]);        
+            NMRdata.editMetData.sldConstFWHH= uicontrol(pnlOptionsPanel, 'Style', 'slider', 'Units','Normalized', 'Min',0,'Max',25,'Value',currentValue, 'SliderStep',[1/25 5/25], 'Position', [0.6 0.6 0.25 0.05], 'CallBack', {@sldConstraint_Callback});        
+            NMRdata.editMetData.lblConstFWHH= uicontrol(pnlOptionsPanel, 'Style','text', 'Units','Normalized', 'HorizontalAlignment','center', 'Position', [0.85 0.6 0.1 0.05], 'String',[char(177) num2str(currentValue*0.1)]);        
             lblGaussian=uicontrol(pnlOptionsPanel, 'Style','text', 'Units','Normalized', 'HorizontalAlignment','left', 'Position',[0.05 0.5 0.3 0.05], 'String', 'Gaussian contribution (0-1): ' );                 
             currentValue=NMRdata.pattern(iPattern).constraints( metIndex,4);         
             NMRdata.editMetData.sldConstGaussian = uicontrol(pnlOptionsPanel, 'Style', 'slider', 'Units','Normalized', 'Min',0,'Max',10,'Value',currentValue, 'SliderStep',[0.1 0.2], 'Position', [0.6 0.5 0.25 0.05], 'CallBack', {@sldConstraint_Callback});        
@@ -1685,10 +1688,10 @@ set(hMainFigure,'Visible','on')
         path=which('lipspin');
         path=strrep(path, 'lipspin.m', '');
        
-        cdataSaveFigure = imread([path 'Images/SaveFigure.png']);
+        cdataSaveFigure = imread([path 'SaveFigure.png']);
         uipushtool(hToolbar, 'cdata',cdataSaveFigure, 'tooltip','Save Figure', 'ClickedCallback',{@SavePlot},'Visible','on','Separator','on');
         if strcmp(tag, 'MainFigure'),
-            cdataUndoX = imread([path 'Images/Undo.png']);
+            cdataUndoX = imread([path 'Undo.png']);
             uipushtool(hToolbar, 'cdata', cdataUndoX, 'tooltip','Undo last action', 'ClickedCallback',{@UndoX},'Visible','on','Separator','on');
         end
         
