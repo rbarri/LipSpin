@@ -71,7 +71,8 @@ X=X/scale_factor_intensities;
 noiseLevel=noiseLevel/scale_factor_intensities;
 scale_factor=0;
 
-%Set the minimum change for partial derivatives in the non-linear least squares method
+%Set the minimum change for partial derivatives in the non-linear least
+%squares method, as defined in the last versions of lsqcurvefit
 DiffMinChange=1e-4;
 MinConstraintRange=DiffMinChange+DiffMinChange/100;
 
@@ -141,27 +142,27 @@ for i=1:length(submets),
             lbppm=-0.001*constraint_factor(2,i);
             ubppm=0.001*constraint_factor(2,i);
         else
-            lbppm=-MinConstraintRange/2;
-            ubppm=MinConstraintRange/2;
+            lbppm=-MinConstraintRange;
+            ubppm=MinConstraintRange;
         end           
         s0(2,i)=fields.pos;        
         ub(2,i)=ubppm+fields.pos;
         lb(2,i)=lbppm+fields.pos;
         %Set boundaries for signal width
         if constraint_factor(3,i)>0
-            %Increments of 0.05 Hz (normal ranges 2 Hz)
-            lfwhh=(-0.05*constraint_factor(3,i)*1e6)/freq;
-            ufwhh=(0.05*constraint_factor(3,i)*1e6)/freq;    
+            %Increments of 0.1 Hz (normal ranges 2 Hz)
+            lfwhh=(-0.1*constraint_factor(3,i)*1e6)/freq;
+            ufwhh=(0.1*constraint_factor(3,i)*1e6)/freq;    
         else
-            lfwhh=-MinConstraintRange/2;
-            ufwhh=MinConstraintRange/2;
+            lfwhh=-MinConstraintRange;
+            ufwhh=MinConstraintRange;
         end
         s0(3,i)=(fields.fwhh*1e6)/freq;
         ub(3,i)=s0(3,i)+ufwhh;
         lb(3,i)=max(s0(3,i)+lfwhh, 0);              
         %Set boundaries for gaussian percentage         
-        ugaussFactor=0.1*constraint_factor(4,i)+MinConstraintRange/2;
-        lgaussFactor=-0.1*constraint_factor(4,i)-MinConstraintRange/2;
+        ugaussFactor=0.1*constraint_factor(4,i)+MinConstraintRange;
+        lgaussFactor=-0.1*constraint_factor(4,i)-MinConstraintRange;
         s0(4,i)=fields.gauss;
         ub(4,i)=min(ugaussFactor+fields.gauss, 1);
         lb(4,i)=max(lgaussFactor+fields.gauss, 0);
@@ -171,12 +172,12 @@ for i=1:length(submets),
             ljcop=(-0.1*constraint_factor(5,i)*1e6)/freq;
             ujcop=(0.1*constraint_factor(5,i)*1e6)/freq;    
         else
-            ljcop=0;
+            ljcop=-MinConstraintRange;
             ujcop=MinConstraintRange;
         end
         s0(5,i)=(fields.jcop*1e6)/freq;
         ub(5,i)=s0(5,i)+ujcop;
-        lb(5,i)=s0(5,i)+ljcop;                              
+        lb(5,i)=max(s0(5,i)+ljcop, 0);                              
     elseif strncmp('spec', submets{i}, 4)
         ub(1:5,i)=MinConstraintRange;
         lb(1:5,i)=0;
@@ -210,30 +211,29 @@ for i=1:length(submets),
             lbppm=-0.001*constraint_factor(2,i);
             ubppm=0.001*constraint_factor(2,i);
         else
-            lbppm=-MinConstraintRange/2;
-            ubppm=MinConstraintRange/2;
+            lbppm=-MinConstraintRange;
+            ubppm=MinConstraintRange;
         end           
         s0(2,i)=fields.pos;        
         ub(2,i)=ubppm+fields.pos;
         lb(2,i)=lbppm+fields.pos;
         
-        %bRuben
         %Set boundaries for signal width
-        if constraint_factor(3,i)~=0
-            %Increments of 0.05 Hz (normal ranges 2 Hz)
-            lfwhh=(-0.05*constraint_factor(3,i)*1e6)/freq;
-            ufwhh=(0.05*constraint_factor(3,i)*1e6)/freq;    
+        if constraint_factor(3,i)>0
+            %Increments of 0.1 Hz (normal ranges 2 Hz)
+            lfwhh=(-0.1*constraint_factor(3,i)*1e6)/freq;
+            ufwhh=(0.1*constraint_factor(3,i)*1e6)/freq;    
         else
-            lfwhh=(-MinConstraintRange/2*1e6)/freq;
-            ufwhh=(MinConstraintRange/2*1e6)/freq;
+            lfwhh=-MinConstraintRange*2;
+            ufwhh=MinConstraintRange*2;
         end
         s0(3,i)=(fields.fwhh*1e6)/freq;
         ub(3,i)=s0(3,i)+ufwhh;
-        lb(3,i)=s0(3,i)+lfwhh;                    
+        lb(3,i)=max(s0(3,i)+lfwhh, 0);                     
         
-        %Set boundaries for gaussian percentage         
-        ugaussFactor=0.1*constraint_factor(4,i)+MinConstraintRange/2;
-        lgaussFactor=-0.1*constraint_factor(4,i)-MinConstraintRange/2;
+        %Set boundaries for gaussian percentage  
+        ugaussFactor=0.1*constraint_factor(4,i)+MinConstraintRange;
+        lgaussFactor=-0.1*constraint_factor(4,i)-MinConstraintRange;
         s0(4,i)=0;
         ub(4,i)=min(ugaussFactor, 1);
         lb(4,i)=max(lgaussFactor, 0);
