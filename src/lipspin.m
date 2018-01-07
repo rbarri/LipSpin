@@ -463,8 +463,10 @@ set(hMainFigure,'Visible','on')
         str=[str '##STDS_FOLDER=' strrep(NMRdata.paths.stds, '\', '\\')  '\n'];
         if isfield(NMRdata, 'standards'),
             NMRdata=rmfield(NMRdata, 'standards');
-        end        
-        LoadFileStandard(NMRdata.paths.stds, []);
+        end
+        if isfield(NMRdata, 'X')
+            LoadFileStandard(NMRdata.paths.stds, []);
+        end
         f = fopen(cfgExtFile, 'w+');
         fprintf(f, str);
         fclose(f);        
